@@ -1,0 +1,30 @@
+/**
+ * Progress bars with centered text
+ */
+.container { width: auto; }
+.progress {
+    position: relative;
+}
+
+.progress span {
+    position: absolute;
+    display: block;
+    width: 100%;
+    color: black;
+ }
+
+
+.progress {
+  overflow: hidden;
+  height: 10px;
+  margin-bottom: 0px;
+  background-color: #ecf0f1;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+dl {
+  margin-top: 0;
+  margin-bottom: 0px;
+}
