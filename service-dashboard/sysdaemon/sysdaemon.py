@@ -26,27 +26,28 @@ def main():
   global services
 
   print('[sysdaemon] started sysdaemon')
-
-  # TODO: check if path exists and catch exception
-
-  if os.path.exists(str(os.environ['sdsettings'])):
-    with open(str(os.environ['sdsettings']), 'r') as outfile:
-      services = json.load(outfile)
-  else:
-    generate_settings()
+  dir = os.path.dirname(__file__)
+  services = json.load(open(os.path.join(dir,'settings.json'), 'r'))
 
   for service in services:
     call_dashboard(service)
     sthread = threading.Thread(target=service_thread, args=(service,))
     sthread.start()
 
-  print('[sysdaemon] starting sys thread')
-  sys = threading.Thread(target=sys_thread)
-  sys.start()
-
-
   while True:
-    time.sleep(10)
+    ram = psutil.virtual_memory().percent
+    cpu = psutil.cpu_percent(interval=1)
+
+    try:
+      data = requests.post(DASHBOARD+'/api/sys',data=
+        {'ram': str(ram),
+         'cpu': str(cpu)
+        })
+      data.connection.close()
+    except:
+      print('[sysdaemon] error while connection to dashboard, trying again')
+      time.sleep(5)
+    time.sleep(1)
 
 ############ internal methods ##############
 
@@ -82,51 +83,6 @@ def service_thread(service):
       continue
 
     time.sleep(3)
-
-def sys_thread():
-  while True:
-    ram = psutil.virtual_memory().percent
-    cpu = psutil.cpu_percent(interval=1)
-
-    try:
-      data = requests.post(DASHBOARD+'/api/sys',data=
-        {'ram': str(ram),
-         'cpu': str(cpu)
-        })
-      data.connection.close()
-    except:
-      print('[sysdaemon] error while connection to dashboard, trying again')
-      time.sleep(5)
-    time.sleep(1)
-
-def generate_settings():
-  global services
-
-  print('[sysdaemon] Settings dialog, please answer the following questions:')
-  while True:
-    print('[sysdaemon] Do you want to add a service?')
-    answer = input('> ')
-    if str(answer) == 'yes':
-      print('[sysdaemon] Name of the service based on initctl?')
-      init = input('> ')
-      print('[sysdaemon] Name of the service to appear in dashboard?')
-      dbname = input('> ')
-      print('[sysdaemon] ############################')
-      print('[sysdaemon] initctl name: ',init)
-      print('[sysdaemon] dashboard name: ',dbname)
-      print('[sysdaemon] ############################')
-      print('[sysdaemon] Is this information correct?')
-      answer = input('> ')
-      if str(answer) == 'yes':
-        services.append({'init': init, 'dbname': dbname, 'running': False})
-        with open('settings.json', 'w') as outfile:
-          json.dump(services, outfile)
-    elif str(answer) == 'no':
-      print('[sysdaemon] Exported settings in:',os.path.abspath('settings.json'))
-      print('[sysdaemon] Please set this path as the sdsettings environment variable.')
-      break
-    else:
-      continue
 
 #############################################
 
